@@ -79,7 +79,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.5f;
   private static final boolean MAINTAIN_ASPECT = false;
 
-  private static final Size DESIRED_PREVIEW_SIZE = new Size(800, 600);
+  private static final Size DESIRED_PREVIEW_SIZE = new Size(400, 300);
   //private static final int CROP_SIZE = 320;
   //private static final Size CROP_SIZE = new Size(320, 320);
 

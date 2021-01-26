@@ -121,7 +121,7 @@ public abstract class CameraActivity extends AppCompatActivity
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
-        setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_USER);
+//        setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         if (hasPermission()) {
             setFragment();
         } else {
