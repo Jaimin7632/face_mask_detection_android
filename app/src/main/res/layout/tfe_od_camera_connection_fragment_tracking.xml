@@ -16,9 +16,9 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
     <org.tensorflow.lite.examples.detection.customview.AutoFitTextureView
         android:id="@+id/texture"
+        android:layout_marginLeft="50dp"
         android:layout_gravity="center"
         android:layout_width="400dp"
         android:layout_height="400dp" />
