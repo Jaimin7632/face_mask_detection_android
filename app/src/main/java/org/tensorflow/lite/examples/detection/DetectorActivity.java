@@ -174,7 +174,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     previewHeight = size.getHeight();
 
     int screenOrientation = getScreenOrientation();
-    sensorOrientation = rotation - screenOrientation;
+    sensorOrientation = 0;
     LOGGER.i("Camera orientation relative to screen canvas: %d", sensorOrientation);
 
     LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
@@ -358,9 +358,9 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
             new Runnable() {
               @Override
               public void run() {
-                showFrameInfo(previewWidth + "x" + previewHeight);
-                showCropInfo(croppedBitmap.getWidth() + "x" + croppedBitmap.getHeight());
-                showInference(lastProcessingTimeMs + "ms");
+//                showFrameInfo(previewWidth + "x" + previewHeight);
+//                showCropInfo(croppedBitmap.getWidth() + "x" + croppedBitmap.getHeight());
+//                showInference(lastProcessingTimeMs + "ms");
               }
             });
 

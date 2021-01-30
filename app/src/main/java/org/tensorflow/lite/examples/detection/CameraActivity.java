@@ -112,94 +112,34 @@ public abstract class CameraActivity extends AppCompatActivity
         super.onCreate(null);
 
         Intent intent = getIntent();
-        //useFacing = intent.getIntExtra(KEY_USE_FACING, CameraCharacteristics.LENS_FACING_FRONT);
+//        useFacing = intent.getIntExtra(KEY_USE_FACING, CameraCharacteristics.LENS_FACING_FRONT);
         useFacing = intent.getIntExtra(KEY_USE_FACING, CameraCharacteristics.LENS_FACING_BACK);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         setContentView(R.layout.tfe_od_activity_camera);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-//        setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         if (hasPermission()) {
             setFragment();
         } else {
             requestPermission();
         }
 
-        threadsTextView = findViewById(R.id.threads);
-        plusImageView = findViewById(R.id.plus);
-        minusImageView = findViewById(R.id.minus);
-        apiSwitchCompat = findViewById(R.id.api_info_switch);
-        bottomSheetLayout = findViewById(R.id.bottom_sheet_layout);
-        gestureLayout = findViewById(R.id.gesture_layout);
-        sheetBehavior = BottomSheetBehavior.from(bottomSheetLayout);
-        bottomSheetArrowImageView = findViewById(R.id.bottom_sheet_arrow);
+//        plusImageView = findViewById(R.id.plus);
+//        minusImageView = findViewById(R.id.minus);
+//        apiSwitchCompat = findViewById(R.id.api_info_switch);
+//        bottomSheetLayout = findViewById(R.id.bottom_sheet_layout);
+//        gestureLayout = findViewById(R.id.gesture_layout);
+//        sheetBehavior = BottomSheetBehavior.from(bottomSheetLayout);
+//        bottomSheetArrowImageView = findViewById(R.id.bottom_sheet_arrow);
+//
+//
+//
+//        frameValueTextView = findViewById(R.id.frame_info);
+//        cropValueTextView = findViewById(R.id.crop_info);
+//        inferenceTimeTextView = findViewById(R.id.inference_info);
 
-        btnSwitchCam = findViewById(R.id.fab);
 
-        ViewTreeObserver vto = gestureLayout.getViewTreeObserver();
-        vto.addOnGlobalLayoutListener(
-                new ViewTreeObserver.OnGlobalLayoutListener() {
-                    @Override
-                    public void onGlobalLayout() {
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-                            gestureLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-                        } else {
-                            gestureLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                        }
-                        //                int width = bottomSheetLayout.getMeasuredWidth();
-                        int height = gestureLayout.getMeasuredHeight();
-
-                        sheetBehavior.setPeekHeight(height);
-                    }
-                });
-        sheetBehavior.setHideable(false);
-
-        sheetBehavior.setBottomSheetCallback(
-                new BottomSheetBehavior.BottomSheetCallback() {
-                    @Override
-                    public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                        switch (newState) {
-                            case BottomSheetBehavior.STATE_HIDDEN:
-                                break;
-                            case BottomSheetBehavior.STATE_EXPANDED: {
-                                bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_down);
-                            }
-                            break;
-                            case BottomSheetBehavior.STATE_COLLAPSED: {
-                                bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_up);
-                            }
-                            break;
-                            case BottomSheetBehavior.STATE_DRAGGING:
-                                break;
-                            case BottomSheetBehavior.STATE_SETTLING:
-                                bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_up);
-                                break;
-                        }
-                    }
-
-                    @Override
-                    public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                    }
-                });
-
-        frameValueTextView = findViewById(R.id.frame_info);
-        cropValueTextView = findViewById(R.id.crop_info);
-        inferenceTimeTextView = findViewById(R.id.inference_info);
-
-        apiSwitchCompat.setOnCheckedChangeListener(this);
-
-        plusImageView.setOnClickListener(this);
-        minusImageView.setOnClickListener(this);
-
-        btnSwitchCam.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onSwitchCamClick();
-            }
-        });
 
     }
 
@@ -604,23 +544,23 @@ public abstract class CameraActivity extends AppCompatActivity
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.plus) {
-            String threads = threadsTextView.getText().toString().trim();
-            int numThreads = Integer.parseInt(threads);
-            if (numThreads >= 9) return;
-            numThreads++;
-            threadsTextView.setText(String.valueOf(numThreads));
-            setNumThreads(numThreads);
-        } else if (v.getId() == R.id.minus) {
-            String threads = threadsTextView.getText().toString().trim();
-            int numThreads = Integer.parseInt(threads);
-            if (numThreads == 1) {
-                return;
-            }
-            numThreads--;
-            threadsTextView.setText(String.valueOf(numThreads));
-            setNumThreads(numThreads);
-        }
+//        if (v.getId() == R.id.plus) {
+//            String threads = threadsTextView.getText().toString().trim();
+//            int numThreads = Integer.parseInt(threads);
+//            if (numThreads >= 9) return;
+//            numThreads++;
+//            threadsTextView.setText(String.valueOf(numThreads));
+//            setNumThreads(numThreads);
+//        } else if (v.getId() == R.id.minus) {
+//            String threads = threadsTextView.getText().toString().trim();
+//            int numThreads = Integer.parseInt(threads);
+//            if (numThreads == 1) {
+//                return;
+//            }
+//            numThreads--;
+//            threadsTextView.setText(String.valueOf(numThreads));
+//            setNumThreads(numThreads);
+//        }
     }
 
     protected void showFrameInfo(String frameInfo) {
