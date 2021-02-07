@@ -13,66 +13,77 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#00000000">
-
-    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@drawable/image001">
+    <ImageView
+        android:layout_width="590dp"
+        android:layout_height="530dp"
+        android:layout_marginStart="200dp"
+        android:layout_marginTop="50dp"
+        android:background="#fff"
+        />
+    <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/container"
-        android:layout_gravity="center"
-        android:layout_width="400dp"
-        android:rotation="-90"
-        android:layout_height="400dp"
-        android:orientation="vertical"
-        tools:context="org.tensorflow.demo.CameraActivity" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-<!--    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
-<!--        xmlns:tools="http://schemas.android.com/tools"-->
-<!--        android:layout_width="match_parent"-->
+        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/container"
+            android:layout_gravity="center"
+            android:layout_width="500dp"
+            android:rotation="-90"
+            android:layout_height="500dp"
+            android:orientation="vertical"
+            android:background="#f00"
+            tools:context="org.tensorflow.demo.CameraActivity" />
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+<!--<LinearLayout-->
+<!--    android:layout_width="match_parent"-->
+<!--    android:layout_height="match_parent">-->
+
+<!--    <LinearLayout-->
+<!--        android:layout_width="200dp"-->
 <!--        android:layout_height="match_parent"-->
-<!--        android:background="@android:color/black"-->
-<!--        android:orientation="vertical">-->
+<!--        android:orientation="vertical"-->
+<!--        >-->
+<!--        <ImageView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:background="@drawable/logo"/>-->
+<!--        <ImageView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:background="@drawable/wello_icon1_yellow"/>-->
+<!--    </LinearLayout>-->
 
-
-<!--        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
-<!--            xmlns:tools="http://schemas.android.com/tools"-->
-<!--            android:id="@+id/container"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="match_parent"-->
-<!--            tools:context="org.tensorflow.demo.CameraActivity" />-->
-
-<!--        <androidx.appcompat.widget.Toolbar-->
-<!--            android:id="@+id/toolbar"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="?attr/actionBarSize"-->
-<!--            android:layout_alignParentTop="true"-->
-<!--            android:background="@color/tfe_semi_transparent">-->
-
-<!--            <ImageView-->
-<!--                android:visibility="gone"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:src="@drawable/tfl2_logo" />-->
-
-<!--        </androidx.appcompat.widget.Toolbar>-->
-
-<!--    </RelativeLayout>-->
-
-<!--    <include-->
-<!--        android:visibility="invisible"-->
-<!--        android:id="@+id/bottom_sheet_layout"-->
-<!--        layout="@layout/tfe_od_layout_bottom_sheet" />-->
-
-<!--    <com.google.android.material.floatingactionbutton.FloatingActionButton-->
-<!--        android:id="@+id/fab"-->
+<!--   <LinearLayout-->
+<!--       android:layout_width="600dp"-->
+<!--       android:layout_height="match_parent"/>-->
+<!--    <LinearLayout-->
 <!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:layout_gravity="end|top"-->
-<!--        android:src="@drawable/ic_baseline_switch_camera_24"-->
-<!--        android:layout_margin="16dp" />-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:orientation="vertical"-->
+<!--        >-->
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+<!--        <ImageView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:background="@drawable/illustration1"/>-->
+<!--        <ImageView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:background="@drawable/illustration2"/>-->
+<!--        <ImageView-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:background="@drawable/illustration3"/>-->
+<!--    </LinearLayout>-->
+
+<!--</LinearLayout>-->
+</FrameLayout>
