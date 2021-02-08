@@ -20,15 +20,15 @@
         android:id="@+id/texture"
         android:layout_marginLeft="50dp"
         android:layout_gravity="center"
-        android:layout_width="400dp"
-        android:layout_height="400dp" />
+        android:layout_width="600dp"
+        android:layout_height="600dp" />
 
     <org.tensorflow.lite.examples.detection.customview.OverlayView
         android:id="@+id/tracking_overlay"
         android:layout_gravity="center"
-        android:layout_width="400dp"
+        android:layout_width="600dp"
         android:rotation="90"
-        android:layout_height="400dp"
+        android:layout_height="600dp"
         android:orientation="vertical" />
 
 </FrameLayout>

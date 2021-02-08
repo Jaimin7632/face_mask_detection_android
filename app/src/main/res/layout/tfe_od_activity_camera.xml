@@ -18,13 +18,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/image001">
-    <ImageView
-        android:layout_width="590dp"
-        android:layout_height="530dp"
-        android:layout_marginStart="200dp"
-        android:layout_marginTop="50dp"
-        android:background="#fff"
-        />
+
     <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
@@ -34,11 +28,10 @@
             xmlns:tools="http://schemas.android.com/tools"
             android:id="@+id/container"
             android:layout_gravity="center"
-            android:layout_width="500dp"
+            android:layout_width="6500dp"
             android:rotation="-90"
-            android:layout_height="500dp"
+            android:layout_height="600dp"
             android:orientation="vertical"
-            android:background="#f00"
             tools:context="org.tensorflow.demo.CameraActivity" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
