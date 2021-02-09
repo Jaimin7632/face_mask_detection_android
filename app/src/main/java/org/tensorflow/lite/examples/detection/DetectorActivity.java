@@ -29,10 +29,15 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
 import android.widget.Toast;
 
+import com.chaquo.python.Kwarg;
+import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
@@ -115,7 +120,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private Bitmap portraitBmp = null;
   // here the face is cropped and drawn
   private Bitmap faceBmp = null;
-
+  Python py;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -135,6 +140,19 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     faceDetector = detector;
 
+    if (!Python.isStarted()) {
+      Python.start(new AndroidPlatform(this));
+    }
+    py = Python.getInstance();
+    PyObject zipfile = py.getModule("hello");
+    PyObject zf = zipfile.callAttr("hello");
+    Log.e("python output", zf.toString());
+//    zf.put("debug", 2);
+//    zf.get("comment");
+//    zf.callAttr("write","filename.txt",new Kwarg("compress_type",zipfile.get("ZIP_STORED")));
+//    val pythonFile = python.getModule("helloworldscript")
+//    val helloWorldString = pythonFile.callAttr("helloworld")
+//    hello_textview.text = helloWorldString.toString()
 
     //checkWritePermission();
 

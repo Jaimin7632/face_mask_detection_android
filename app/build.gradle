@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'de.undercouch.download'
+apply plugin: 'com.chaquo.python'
 
 android {
     compileSdkVersion 30
@@ -10,6 +11,22 @@ android {
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
+        sourceSets {
+            main {
+                python {
+                    srcDirs = ["src/main/python"]
+                }
+            }
+        }
+        python {
+            buildPython "/usr/local/bin/python3"
+            buildPython "python3"
+        }
+        ndk {
+            abiFilters "armeabi-v7a", "x86"
+        }
+
+
     }
     buildTypes {
         release {
