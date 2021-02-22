@@ -16,6 +16,10 @@
 
 package org.tensorflow.lite.examples.detection;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -28,16 +32,27 @@ import android.graphics.Typeface;
 import android.hardware.camera2.CameraCharacteristics;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.chaquo.python.Kwarg;
-import com.chaquo.python.PyObject;
-import com.chaquo.python.Python;
-import com.chaquo.python.android.AndroidPlatform;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+//import com.chaquo.python.Kwarg;
+//import com.chaquo.python.PyObject;
+//import com.chaquo.python.Python;
+//import com.chaquo.python.android.AndroidPlatform;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
@@ -120,12 +135,42 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private Bitmap portraitBmp = null;
   // here the face is cropped and drawn
   private Bitmap faceBmp = null;
-  Python py;
+
+  // UART Configuration Parameters
+
+  private static final int DATA_BITS = 8;
+  private static final int STOP_BITS = 1;
+
+  private static final int CHUNK_SIZE = 512;
+
+  private HandlerThread mInputThread;
+  private Handler mInputHandler;
+
+  TextView receiveText;
+  View view;
+
+  FrameLayout frame_eyes;
+  LinearLayout lin_eyes;
+  ImageView img_green, img_red;
+  TextView txt_notes, eye_1;
+
+  TempertureReceiver tempertureReceiver;
+  RelativeLayout defaultView, TemperatureView;
+  ImageView TemperatureIndicator,TemperatureViewBG;
+  TextView tvTemperatureCounter;
+
+  boolean isScan =true;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+    tempertureReceiver = new TempertureReceiver();
+    LocalBroadcastManager.getInstance(this).registerReceiver(tempertureReceiver, new IntentFilter("TAG_TEMPERTURE"));
+
+    receiveText =  findViewById(R.id.receive_text);
+    LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    view = inflater.inflate(R.layout.tfe_od_camera_connection_fragment_tracking, null);
 
     // Real-time contour detection of multiple faces
     FaceDetectorOptions options =
@@ -140,13 +185,14 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     faceDetector = detector;
 
-    if (!Python.isStarted()) {
-      Python.start(new AndroidPlatform(this));
-    }
-    py = Python.getInstance();
-    PyObject zipfile = py.getModule("hello");
-    PyObject zf = zipfile.callAttr("hello");
-    Log.e("python output", zf.toString());
+//    if (!Python.isStarted()) {
+//      Python.start(new AndroidPlatform(this));
+//    }
+//    py = Python.getInstance();
+//    PyObject zipfile = py.getModule("hello");
+//    PyObject zf = zipfile.callAttr("hello");
+//    Log.e("python output", zf.toString());
+//    Toast.makeText(this, zf.toString(), Toast.LENGTH_SHORT).show();
 //    zf.put("debug", 2);
 //    zf.get("comment");
 //    zf.callAttr("write","filename.txt",new Kwarg("compress_type",zipfile.get("ZIP_STORED")));
@@ -385,7 +431,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   }
 
   private void onFacesDetected(long currTimestamp, List<Face> faces) {
-
+    send("E\n");
     cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
     final Canvas canvas = new Canvas(cropCopyBitmap);
     final Paint paint = new Paint();
@@ -508,7 +554,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
         result.setColor(color);
         result.setLocation(boundingBox);
         mappedRecognitions.add(result);
-
+        send("M0\n");
 
       }
 
@@ -521,6 +567,63 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     updateResults(currTimestamp, mappedRecognitions);
 
+
+  }
+  public class TempertureReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (intent.getExtras() != null) {
+        Float f = 0.0f;
+        // try {
+        f = Float.parseFloat(intent.getExtras().getString("temp_data"));
+        receiveText.setText("Operating Range : " + f + " F");
+        Toast.makeText(context, "Operating Range : " + f + " F", Toast.LENGTH_LONG).show();
+
+//        if (f > 90 && f < 110) {
+//          TemperatureView.setVisibility(View.VISIBLE);
+//          defaultView.setVisibility(View.GONE);
+//          if (f > 100.0) {
+//
+//            setViewOfTempareture(true, f);
+//          } else {
+//
+//            setViewOfTempareture(false, f);
+//          }
+//
+//          new Handler().postDelayed(new Runnable() {
+//            @Override
+//            public void run() {
+//              isScan = true;
+//              defaultView.setVisibility(View.VISIBLE);
+//              TemperatureView.setVisibility(View.GONE);
+//
+//            }
+//          }, 2500);
+//
+//        } else {
+//
+//          defaultView.setVisibility(View.VISIBLE);
+//          TemperatureView.setVisibility(View.GONE);
+//        }
+        //  } catch (Exception e) {
+        //      callToast("123 "+e.getMessage());
+        //  }
+      }
+    }
+  }
+
+  private void setViewOfTempareture(boolean isHigh, float temperature) {
+
+    TemperatureView.setVisibility(View.VISIBLE);
+//    if (isHigh) {
+//      TemperatureViewBG.setBackground(getDrawable(R.drawable.bg_trans_pink));
+//      TemperatureIndicator.setImageResource(R.drawable.icon_wrong);
+//    } else {
+//      TemperatureViewBG.setBackground(getDrawable(R.drawable.bg_trans_green));
+//      TemperatureIndicator.setImageResource(R.drawable.icon_right);
+//
+//    }
+//    tvTemperatureCounter.setText(temperature + " F");
 
   }
 

@@ -24,7 +24,7 @@ import psutil
 import string
 import random
 import tkinter as tk
-from tkinter import ttk
+#from tkinter import ttk
 from queue import Queue
 from inspect import getsourcefile
 from os.path import abspath

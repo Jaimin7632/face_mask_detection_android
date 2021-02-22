@@ -18,8 +18,12 @@ package org.tensorflow.lite.examples.detection;
 
 import android.Manifest;
 import android.app.Fragment;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
@@ -27,6 +31,9 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.hardware.usb.UsbDevice;
+import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbManager;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
@@ -35,14 +42,19 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.IBinder;
 import android.os.Trace;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.util.Size;
 import android.view.Surface;
 import android.view.View;
@@ -56,17 +68,26 @@ import android.widget.Toast;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.hoho.android.usbserial.driver.UsbSerialDriver;
+import com.hoho.android.usbserial.driver.UsbSerialPort;
+import com.hoho.android.usbserial.driver.UsbSerialProber;
 
 import java.nio.ByteBuffer;
 
 import org.tensorflow.lite.examples.detection.env.ImageUtils;
 import org.tensorflow.lite.examples.detection.env.Logger;
+import org.tensorflow.lite.examples.detection.uartBoard.Constants;
+import org.tensorflow.lite.examples.detection.uartBoard.CustomProber;
+import org.tensorflow.lite.examples.detection.uartBoard.SerialListener;
+import org.tensorflow.lite.examples.detection.uartBoard.SerialService;
+import org.tensorflow.lite.examples.detection.uartBoard.SerialSocket;
+import org.tensorflow.lite.examples.detection.uartBoard.TextUtil;
 
 public abstract class CameraActivity extends AppCompatActivity
         implements OnImageAvailableListener,
         Camera.PreviewCallback,
         CompoundButton.OnCheckedChangeListener,
-        View.OnClickListener {
+        View.OnClickListener, SerialListener, ServiceConnection {
     private static final Logger LOGGER = new Logger();
 
     private static final int PERMISSIONS_REQUEST = 1;
@@ -100,6 +121,24 @@ public abstract class CameraActivity extends AppCompatActivity
     private static final String KEY_USE_FACING = "use_facing";
     private Integer useFacing = null;
     private String cameraId = null;
+
+    private enum Connected {False, Pending, True}
+
+    private BroadcastReceiver broadcastReceiver;
+    private int deviceId = 1003, portNum = 0, baudRate = 115200;
+    private UsbSerialPort usbSerialPort;
+    private SerialService service;
+
+    private TextView sendText;
+    private TextUtil.HexWatcher hexWatcher;
+
+    private Connected connected = Connected.False;
+    private boolean initialStart = true;
+    private boolean hexEnabled = false;
+    private boolean controlLinesEnabled = false;
+    private boolean pendingNewline = false;
+    private String newline = TextUtil.newline_crlf;
+
 
     protected Integer getCameraFacing() {
         return useFacing;
@@ -139,9 +178,12 @@ public abstract class CameraActivity extends AppCompatActivity
 //        cropValueTextView = findViewById(R.id.crop_info);
 //        inferenceTimeTextView = findViewById(R.id.inference_info);
 
-
+        bindService(new Intent(this, SerialService.class), this, Context.BIND_AUTO_CREATE);
+        TerminalFragment();
 
     }
+
+
 
     private void onSwitchCamClick() {
 
@@ -586,4 +628,205 @@ public abstract class CameraActivity extends AppCompatActivity
     protected abstract void setNumThreads(int numThreads);
 
     protected abstract void setUseNNAPI(boolean isChecked);
+
+
+    public void TerminalFragment() {
+        broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().equals(Constants.INTENT_ACTION_GRANT_USB)) {
+                    Boolean granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
+                    connect(granted);
+                }
+            }
+        };
+    }
+
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder binder) {
+        service = ((SerialService.SerialBinder) binder).getService();
+        service.attach(this);
+        if (initialStart) {
+            initialStart = false;
+            this.runOnUiThread(this::connect);
+        }
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+        service = null;
+    }
+
+    private void connect() {
+        connect(null);
+    }
+
+    private void connect(Boolean permissionGranted) {
+        UsbDevice device = null;
+        UsbManager usbManager = (UsbManager) this.getSystemService(Context.USB_SERVICE);
+        for (UsbDevice v : usbManager.getDeviceList().values())
+            if (v.getDeviceId() == deviceId)
+                device = v;
+        if (device == null) {
+            status("connection failed: device not found");
+            return;
+        }
+        UsbSerialDriver driver = UsbSerialProber.getDefaultProber().probeDevice(device);
+        if (driver == null) {
+            driver = CustomProber.getCustomProber().probeDevice(device);
+        }
+        if (driver == null) {
+            status("connection failed: no driver for device");
+            return;
+        }
+        if (driver.getPorts().size() < portNum) {
+            status("connection failed: not enough ports at device");
+            return;
+        }
+        usbSerialPort = driver.getPorts().get(portNum);
+        UsbDeviceConnection usbConnection = usbManager.openDevice(driver.getDevice());
+        if (usbConnection == null && permissionGranted == null && !usbManager.hasPermission(driver.getDevice())) {
+            PendingIntent usbPermissionIntent = PendingIntent.getBroadcast(this, 0, new Intent(Constants.INTENT_ACTION_GRANT_USB), 0);
+            usbManager.requestPermission(driver.getDevice(), usbPermissionIntent);
+            return;
+        }
+        if (usbConnection == null) {
+            if (!usbManager.hasPermission(driver.getDevice()))
+                status("connection failed: permission denied");
+            else
+                status("connection failed: open failed");
+            return;
+        }
+
+        connected = Connected.Pending;
+        try {
+            usbSerialPort.open(usbConnection);
+            usbSerialPort.setParameters(baudRate, UsbSerialPort.DATABITS_8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
+            SerialSocket socket = new SerialSocket(this.getApplicationContext(), usbConnection, usbSerialPort);
+            service.connect(socket);
+            // usb connect is not asynchronous. connect-success and connect-error are returned immediately from socket.connect
+            // for consistency to bluetooth/bluetooth-LE app use same SerialListener and SerialService classes
+            onSerialConnect();
+        } catch (Exception e) {
+            onSerialConnectError(e);
+        }
+    }
+
+    private void disconnect() {
+        connected = Connected.False;
+        service.disconnect();
+        usbSerialPort = null;
+    }
+
+    public void send(String str) {
+        if (connected != Connected.True) {
+            Toast.makeText(this, "not connected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            String msg;
+            byte[] data;
+            if (hexEnabled) {
+                StringBuilder sb = new StringBuilder();
+                TextUtil.toHexString(sb, TextUtil.fromHexString(str));
+                TextUtil.toHexString(sb, newline.getBytes());
+                msg = sb.toString();
+                data = TextUtil.fromHexString(msg);
+            } else {
+                msg = str;
+                data = (str + newline).getBytes();
+            }
+            SpannableStringBuilder spn = new SpannableStringBuilder(msg + '\n');
+            spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.design_default_color_primary)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            //   Toast.makeText(CameraActivity.this, "" + spn, Toast.LENGTH_SHORT).show();
+            service.write(data);
+        } catch (Exception e) {
+            onSerialIoError(e);
+        }
+        //if (isclick) {
+        //   send("M0\n");
+        //    isclick = false;
+        //}
+    }
+
+    private void receive(byte[] data) {
+        if (hexEnabled) {
+            Toast.makeText(CameraActivity.this, "" + TextUtil.toHexString(data) + '\n', Toast.LENGTH_SHORT).show();
+        } else {
+            String msg = new String(data);
+            if (newline.equals(TextUtil.newline_crlf) && msg.length() > 0) {
+                // don't show CR as ^M if directly before LF
+                //     Toast.makeText(CameraActivity.this, "received : " + msg, Toast.LENGTH_SHORT).show();
+                msg = msg.replace(TextUtil.newline_crlf, TextUtil.newline_lf);
+                // special handling if CR and LF come in separate fragments
+                if (pendingNewline && msg.charAt(0) == '\n') {
+                    //  Editable edt = msg;
+                    //  if (edt != null && edt.length() > 1)
+                    //      edt.replace(edt.length() - 2, edt.length(), "");
+                }
+                pendingNewline = msg.charAt(msg.length() - 1) == '\r';
+            }
+
+            String temp = String.valueOf(TextUtil.toCaretString(msg, newline.length() != 0));
+            if (temp != null && temp.contains("P0")) {
+                String[] temp1 = temp.split("P0");
+                String[] temp2 = new String[0];
+                String[] temp3 = new String[0];
+                if (temp1.length > 1) {
+                    temp2 = temp1[1].split("\"*Run");
+
+                    temp3 = temp2[0].split(",");
+                }
+
+
+                LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(this);
+                Intent localIntent = null;
+                localIntent = new Intent("TAG_TEMPERTURE");
+                localIntent.putExtra("temp_data", temp3[2].replace("*", "").trim());
+                localBroadcastManager.sendBroadcast(localIntent);
+
+                // Toast.makeText(CameraActivity.this, "" + temp3[2].replace("*", "").trim(), Toast.LENGTH_SHORT).show();
+            }
+
+        }
+    }
+
+    void status(String str) {
+        SpannableStringBuilder spn = new SpannableStringBuilder(str + '\n');
+        spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.tfe_color_primary)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        //       Toast.makeText(CameraActivity.this, "" + spn, Toast.LENGTH_SHORT).show();
+    }
+
+    /*
+     * SerialListener
+     */
+    @Override
+    public void onSerialConnect() {
+        status("connected");
+        Toast.makeText(service, "connected", Toast.LENGTH_SHORT).show();
+        connected = Connected.True;
+
+//        send("E\n");
+//        send("M0\n");
+
+
+    }
+
+    @Override
+    public void onSerialConnectError(Exception e) {
+        status("connection failed: " + e.getMessage());
+        disconnect();
+    }
+
+    @Override
+    public void onSerialRead(byte[] data) {
+        receive(data);
+    }
+
+    @Override
+    public void onSerialIoError(Exception e) {
+        status("connection lost: " + e.getMessage());
+        disconnect();
+    }
+
 }
