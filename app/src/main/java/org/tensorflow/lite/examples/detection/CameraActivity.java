@@ -807,7 +807,7 @@ public abstract class CameraActivity extends AppCompatActivity
         connected = Connected.True;
 
 //        send("E\n");
-//        send("M0\n");
+        send("M0\n");
 
 
     }

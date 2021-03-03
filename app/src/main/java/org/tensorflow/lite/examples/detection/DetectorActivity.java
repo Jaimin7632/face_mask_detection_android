@@ -35,6 +35,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.SystemClock;
+import android.text.format.Time;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
@@ -60,10 +61,16 @@ import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.InputStreamReader;
+
+import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+
 import org.tensorflow.lite.examples.detection.customview.OverlayView;
 import org.tensorflow.lite.examples.detection.customview.OverlayView.DrawCallback;
 import org.tensorflow.lite.examples.detection.env.BorderedText;
@@ -154,10 +161,16 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   ImageView img_green, img_red;
   TextView txt_notes, eye_1;
 
+
   TempertureReceiver tempertureReceiver;
-  RelativeLayout defaultView, TemperatureView;
+  RelativeLayout TemperatureView;
   ImageView TemperatureIndicator,TemperatureViewBG;
   TextView tvTemperatureCounter;
+  LinearLayout defaultView;
+
+  HashMap<String, String> xlatedata;
+
+  Date t1;
 
   boolean isScan =true;
 
@@ -184,6 +197,13 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     FaceDetector detector = FaceDetection.getClient(options);
 
     faceDetector = detector;
+    readCsv();
+    defaultView = findViewById(R.id.view_default);
+    TemperatureView =  findViewById(R.id.view_temperature);
+    TemperatureViewBG = findViewById(R.id.img_temp_background);
+    TemperatureIndicator = findViewById(R.id.img_temp_sign);
+    tvTemperatureCounter =  findViewById(R.id.tv_temp_count);
+
 
 //    if (!Python.isStarted()) {
 //      Python.start(new AndroidPlatform(this));
@@ -202,6 +222,34 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     //checkWritePermission();
 
+  }
+
+  public void readCsv(){
+    try {
+      xlatedata = new HashMap<String, String>();
+
+      BufferedReader reader  = new BufferedReader(
+              new InputStreamReader(getAssets().open("xlateSkinTemp.csv"), "UTF-8"));
+
+      // do reading, usually loop until end of file reading
+      String mLine;
+      while ((mLine = reader.readLine()) != null) {
+        //process line
+        try{
+          String[] d = mLine.toString().split(",");
+          xlatedata.put(d[0],d[1]);
+        }catch (Exception e){
+          Log.e("#",mLine+" line not parsed");
+          Toast.makeText(this, mLine+" line not parsed", Toast.LENGTH_SHORT).show();
+        }
+
+      }
+//      Toast.makeText(this, xlatedata.get("101.1"), Toast.LENGTH_LONG).show();
+    } catch (IOException e) {
+      Log.e("#",e.toString());
+      Toast.makeText(this, "Error in reading csv", Toast.LENGTH_SHORT).show();
+
+    }
   }
 
   @Override
@@ -431,141 +479,153 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   }
 
   private void onFacesDetected(long currTimestamp, List<Face> faces) {
-    send("E\n");
-    cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
-    final Canvas canvas = new Canvas(cropCopyBitmap);
-    final Paint paint = new Paint();
-    paint.setColor(Color.RED);
-    paint.setStyle(Style.STROKE);
-    paint.setStrokeWidth(2.0f);
-
-    float minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
-    switch (MODE) {
-      case TF_OD_API:
-        minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
-        break;
-    }
-
-    final List<Classifier.Recognition> mappedRecognitions =
-            new LinkedList<Classifier.Recognition>();
-
-
-    //final List<Classifier.Recognition> results = new ArrayList<>();
-
-    // Note this can be done only once
-    int sourceW = rgbFrameBitmap.getWidth();
-    int sourceH = rgbFrameBitmap.getHeight();
-    int targetW = portraitBmp.getWidth();
-    int targetH = portraitBmp.getHeight();
-    Matrix transform = createTransform(
-            sourceW,
-            sourceH,
-            targetW,
-            targetH,
-            sensorOrientation);
-    final Canvas cv = new Canvas(portraitBmp);
-
-    // draws the original image in portrait mode.
-    cv.drawBitmap(rgbFrameBitmap, transform, null);
-
-    final Canvas cvFace = new Canvas(faceBmp);
-
-    boolean saved = false;
-
-    for (Face face : faces) {
-
-      LOGGER.i("FACE" + face.toString());
-
-      LOGGER.i("Running detection on face " + currTimestamp);
-
-      //results = detector.recognizeImage(croppedBitmap);
-
-
-      final RectF boundingBox = new RectF(face.getBoundingBox());
-
-      //final boolean goodConfidence = result.getConfidence() >= minimumConfidence;
-      final boolean goodConfidence = true; //face.get;
-      if (boundingBox != null && goodConfidence) {
-
-        // maps crop coordinates to original
-        cropToFrameTransform.mapRect(boundingBox);
-
-        // maps original coordinates to portrait coordinates
-        RectF faceBB = new RectF(boundingBox);
-        transform.mapRect(faceBB);
-
-        // translates portrait to origin and scales to fit input inference size
-        //cv.drawRect(faceBB, paint);
-        float sx = ((float) TF_OD_API_INPUT_SIZE) / faceBB.width();
-        float sy = ((float) TF_OD_API_INPUT_SIZE) / faceBB.height();
-        Matrix matrix = new Matrix();
-        matrix.postTranslate(-faceBB.left, -faceBB.top);
-        matrix.postScale(sx, sy);
-
-        cvFace.drawBitmap(portraitBmp, matrix, null);
-
-
-        String label = "";
-        float confidence = -1f;
-        Integer color = Color.BLUE;
-
-        final long startTime = SystemClock.uptimeMillis();
-        final List<Classifier.Recognition> resultsAux = detector.recognizeImage(faceBmp);
-        lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
-
-        if (resultsAux.size() > 0) {
-
-          Classifier.Recognition result = resultsAux.get(0);
-
-          float conf = result.getConfidence();
-          if (conf >= 0.6f) {
-
-            confidence = conf;
-            label = result.getTitle();
-            if (result.getId().equals("0")) {
-              color = Color.GREEN;
-            }
-            else {
-              color = Color.RED;
-            }
-          }
-
-        }
-
-        if (getCameraFacing() == CameraCharacteristics.LENS_FACING_FRONT) {
-
-          // camera is frontal so the image is flipped horizontally
-          // flips horizontally
-          Matrix flip = new Matrix();
-          if (sensorOrientation == 90 || sensorOrientation == 270) {
-            flip.postScale(1, -1, previewWidth / 2.0f, previewHeight / 2.0f);
-          }
-          else {
-            flip.postScale(-1, 1, previewWidth / 2.0f, previewHeight / 2.0f);
-          }
-          //flip.postScale(1, -1, targetW / 2.0f, targetH / 2.0f);
-          flip.mapRect(boundingBox);
-
-        }
-
-        final Classifier.Recognition result = new Classifier.Recognition(
-                "0", label, confidence, boundingBox);
-
-        result.setColor(color);
-        result.setLocation(boundingBox);
-        mappedRecognitions.add(result);
+//    send("E\n");
+    if(t1 == null){
+      t1 = new Date();
+      send("M0\n");
+    }else{
+      Date t2 = new Date();
+      if(t2.getTime()- t1.getTime() > 2*1000){
         send("M0\n");
-
+        t1 = new Date();
+        Toast.makeText(this, "command sent to nano...", Toast.LENGTH_SHORT).show();
       }
-
-
     }
+
+//    cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
+//    final Canvas canvas = new Canvas(cropCopyBitmap);
+//    final Paint paint = new Paint();
+//    paint.setColor(Color.RED);
+//    paint.setStyle(Style.STROKE);
+//    paint.setStrokeWidth(2.0f);
+//
+//    float minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
+//    switch (MODE) {
+//      case TF_OD_API:
+//        minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
+//        break;
+//    }
+//
+//    final List<Classifier.Recognition> mappedRecognitions =
+//            new LinkedList<Classifier.Recognition>();
+//
+//
+//    //final List<Classifier.Recognition> results = new ArrayList<>();
+//
+//    // Note this can be done only once
+//    int sourceW = rgbFrameBitmap.getWidth();
+//    int sourceH = rgbFrameBitmap.getHeight();
+//    int targetW = portraitBmp.getWidth();
+//    int targetH = portraitBmp.getHeight();
+//    Matrix transform = createTransform(
+//            sourceW,
+//            sourceH,
+//            targetW,
+//            targetH,
+//            sensorOrientation);
+//    final Canvas cv = new Canvas(portraitBmp);
+//
+//    // draws the original image in portrait mode.
+//    cv.drawBitmap(rgbFrameBitmap, transform, null);
+//
+//    final Canvas cvFace = new Canvas(faceBmp);
+//
+//    boolean saved = false;
+//
+//    for (Face face : faces) {
+//
+//      LOGGER.i("FACE" + face.toString());
+//
+//      LOGGER.i("Running detection on face " + currTimestamp);
+//
+//      //results = detector.recognizeImage(croppedBitmap);
+//
+//
+//      final RectF boundingBox = new RectF(face.getBoundingBox());
+//
+//      //final boolean goodConfidence = result.getConfidence() >= minimumConfidence;
+//      final boolean goodConfidence = true; //face.get;
+//      if (boundingBox != null && goodConfidence) {
+//
+//        // maps crop coordinates to original
+//        cropToFrameTransform.mapRect(boundingBox);
+//
+//        // maps original coordinates to portrait coordinates
+//        RectF faceBB = new RectF(boundingBox);
+//        transform.mapRect(faceBB);
+//
+//        // translates portrait to origin and scales to fit input inference size
+//        //cv.drawRect(faceBB, paint);
+//        float sx = ((float) TF_OD_API_INPUT_SIZE) / faceBB.width();
+//        float sy = ((float) TF_OD_API_INPUT_SIZE) / faceBB.height();
+//        Matrix matrix = new Matrix();
+//        matrix.postTranslate(-faceBB.left, -faceBB.top);
+//        matrix.postScale(sx, sy);
+//
+//        cvFace.drawBitmap(portraitBmp, matrix, null);
+//
+//
+//        String label = "";
+//        float confidence = -1f;
+//        Integer color = Color.BLUE;
+//
+//        final long startTime = SystemClock.uptimeMillis();
+//        final List<Classifier.Recognition> resultsAux = detector.recognizeImage(faceBmp);
+//        lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+//
+//        if (resultsAux.size() > 0) {
+//
+//          Classifier.Recognition result = resultsAux.get(0);
+//
+//          float conf = result.getConfidence();
+//          if (conf >= 0.6f) {
+//
+//            confidence = conf;
+//            label = result.getTitle();
+//            if (result.getId().equals("0")) {
+//              color = Color.GREEN;
+//            }
+//            else {
+//              color = Color.RED;
+//            }
+//          }
+//
+//        }
+//
+//        if (getCameraFacing() == CameraCharacteristics.LENS_FACING_FRONT) {
+//
+//          // camera is frontal so the image is flipped horizontally
+//          // flips horizontally
+//          Matrix flip = new Matrix();
+//          if (sensorOrientation == 90 || sensorOrientation == 270) {
+//            flip.postScale(1, -1, previewWidth / 2.0f, previewHeight / 2.0f);
+//          }
+//          else {
+//            flip.postScale(-1, 1, previewWidth / 2.0f, previewHeight / 2.0f);
+//          }
+//          //flip.postScale(1, -1, targetW / 2.0f, targetH / 2.0f);
+//          flip.mapRect(boundingBox);
+//
+//        }
+//
+//        final Classifier.Recognition result = new Classifier.Recognition(
+//                "0", label, confidence, boundingBox);
+//
+//        result.setColor(color);
+//        result.setLocation(boundingBox);
+//        mappedRecognitions.add(result);
+//
+//
+//      }
+
+
+//    }
 
     //    if (saved) {
 //      lastSaved = System.currentTimeMillis();
 //    }
 
-    updateResults(currTimestamp, mappedRecognitions);
+//    updateResults(currTimestamp, mappedRecognitions);
 
 
   }
@@ -574,40 +634,43 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     public void onReceive(Context context, Intent intent) {
       if (intent.getExtras() != null) {
         Float f = 0.0f;
-        // try {
+         try {
         f = Float.parseFloat(intent.getExtras().getString("temp_data"));
-        receiveText.setText("Operating Range : " + f + " F");
-        Toast.makeText(context, "Operating Range : " + f + " F", Toast.LENGTH_LONG).show();
+        receiveText.setText("Operating Range : " + f + " F" + xlatedata.get(f.toString()));
+        Toast.makeText(context, "Operating Range : " + f + " F"+xlatedata.get(f.toString()), Toast.LENGTH_LONG).show();
 
-//        if (f > 90 && f < 110) {
-//          TemperatureView.setVisibility(View.VISIBLE);
-//          defaultView.setVisibility(View.GONE);
-//          if (f > 100.0) {
-//
-//            setViewOfTempareture(true, f);
-//          } else {
-//
-//            setViewOfTempareture(false, f);
-//          }
-//
-//          new Handler().postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//              isScan = true;
-//              defaultView.setVisibility(View.VISIBLE);
-//              TemperatureView.setVisibility(View.GONE);
-//
-//            }
-//          }, 2500);
-//
-//        } else {
-//
-//          defaultView.setVisibility(View.VISIBLE);
-//          TemperatureView.setVisibility(View.GONE);
-//        }
-        //  } catch (Exception e) {
-        //      callToast("123 "+e.getMessage());
-        //  }
+
+
+
+                    if (f > 90 && f < 110) {
+                        TemperatureView.setVisibility(View.VISIBLE);
+                        defaultView.setVisibility(View.GONE);
+                        if (f > 100.0) {
+
+                            setViewOfTempareture(true, f);
+                        } else {
+
+                            setViewOfTempareture(false, f);
+                        }
+
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                isScan = true;
+                               defaultView.setVisibility(View.VISIBLE);
+                               TemperatureView.setVisibility(View.GONE);
+
+                            }
+                        }, 2500);
+
+                    } else {
+
+                        defaultView.setVisibility(View.VISIBLE);
+                        TemperatureView.setVisibility(View.GONE);
+                    }
+          } catch (Exception e) {
+           Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
+          }
       }
     }
   }
@@ -615,15 +678,15 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   private void setViewOfTempareture(boolean isHigh, float temperature) {
 
     TemperatureView.setVisibility(View.VISIBLE);
-//    if (isHigh) {
-//      TemperatureViewBG.setBackground(getDrawable(R.drawable.bg_trans_pink));
-//      TemperatureIndicator.setImageResource(R.drawable.icon_wrong);
-//    } else {
-//      TemperatureViewBG.setBackground(getDrawable(R.drawable.bg_trans_green));
-//      TemperatureIndicator.setImageResource(R.drawable.icon_right);
-//
-//    }
-//    tvTemperatureCounter.setText(temperature + " F");
+    if (isHigh) {
+      TemperatureViewBG.setBackground(getDrawable(R.drawable.bg_trans_pink));
+      TemperatureIndicator.setImageResource(R.drawable.icon_wrong);
+    } else {
+      TemperatureViewBG.setBackground(getDrawable(R.drawable.bg_trans_green));
+      TemperatureIndicator.setImageResource(R.drawable.icon_right);
+
+    }
+    tvTemperatureCounter.setText(temperature + " F");
 
   }
 
