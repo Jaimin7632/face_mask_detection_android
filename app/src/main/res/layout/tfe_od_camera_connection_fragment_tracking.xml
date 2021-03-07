@@ -18,44 +18,21 @@
     android:layout_height="match_parent">
     <org.tensorflow.lite.examples.detection.customview.AutoFitTextureView
         android:id="@+id/texture"
-        android:layout_marginLeft="50dp"
+        android:layout_marginLeft="0dp"
         android:layout_gravity="center"
-        android:layout_width="600dp"
-        android:layout_height="600dp" />
+        android:layout_width="700dp"
+        android:layout_height="700dp" />
 
     <org.tensorflow.lite.examples.detection.customview.OverlayView
         android:id="@+id/tracking_overlay"
         android:layout_gravity="center"
-        android:layout_width="600dp"
+        android:layout_width="700dp"
+        android:layout_marginLeft="-100dp"
         android:rotation="90"
-        android:layout_height="600dp"
+        android:layout_height="700dp"
         android:orientation="vertical" />
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:layout_marginLeft="520dp"
-        android:rotation="90"
-        android:id="@+id/view_default"
-        android:orientation="horizontal">
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:alpha="1"
-            android:background="@drawable/noface" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-
-            android:padding="20dp"
-            android:text="Please align your eyes \n in the two circle">
-
-        </TextView>
-    </LinearLayout>
     <RelativeLayout
         android:layout_gravity="center"
         android:rotation="90"
@@ -64,11 +41,11 @@
 
         <ImageView
             android:layout_width="700dp"
-            android:layout_gravity="center"
-            android:alpha="0.4"
+            android:layout_height="600dp"
+        android:layout_gravity="center"
+        android:alpha="0.4"
 
-            android:background="@drawable/eyes"
-            android:layout_height="550dp"/>
+        android:background="@drawable/eyes"/>
 
 
 
@@ -152,5 +129,41 @@
 
 
     </RelativeLayout>
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="420dp"
+        android:rotation="90"
+        android:id="@+id/view_default"
+        android:orientation="horizontal">
 
+
+
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="15dp"
+            android:layout_gravity="center"
+            android:layout_marginLeft="80dp"
+            android:background="#FFF">
+            <TextView
+                android:layout_width="500dp"
+                android:layout_height="wrap_content"
+                android:padding="15dp"
+                android:layout_marginLeft="10dp"
+                android:text="Please align your eyes \n in the two circle">
+
+            </TextView>
+        </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/noface" />
+        </RelativeLayout>
+    </RelativeLayout>
 </FrameLayout>
