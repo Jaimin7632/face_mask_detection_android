@@ -568,27 +568,27 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
           Integer color = Color.BLUE;
 
           final long startTime = SystemClock.uptimeMillis();
-//          final List<Classifier.Recognition> resultsAux = detector.recognizeImage(faceBmp);
-//          lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
-//
-//          if (resultsAux.size() > 0) {
-//
-//            Classifier.Recognition result = resultsAux.get(0);
-//
-//            float conf = result.getConfidence();
-//            if (conf >= 0.6f) {
-//
-//              confidence = conf;
-//              label = result.getTitle();
-//              if (result.getId().equals("0")) {
-//                color = Color.GREEN;
-//              }
-//              else {
-//                color = Color.RED;
-//              }
-//            }
-//
-//          }
+          final List<Classifier.Recognition> resultsAux = detector.recognizeImage(faceBmp);
+          lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+
+          if (resultsAux.size() > 0) {
+
+            Classifier.Recognition result = resultsAux.get(0);
+
+            float conf = result.getConfidence();
+            if (conf >= 0.6f) {
+
+              confidence = conf;
+              label = result.getTitle();
+              if (result.getId().equals("0")) {
+                color = Color.GREEN;
+              }
+              else {
+                color = Color.RED;
+              }
+            }
+
+          }
 
           if (getCameraFacing() == CameraCharacteristics.LENS_FACING_FRONT) {
 
@@ -608,7 +608,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
           final Classifier.Recognition result = new Classifier.Recognition(
                   "0", label, confidence, boundingBox);
-          if (faceBB.centerX() > 325 && faceBB.centerX() < 375 && faceBB.centerY() > 325 && faceBB.centerY() < 375 && faceBB.height() >  330 && isScan){
+          if (faceBB.centerX() > 300 && faceBB.centerX() < 370 && faceBB.centerY() > 245 && faceBB.centerY() < 310 && faceBB.height() >  330 && isScan){
             send("M0\n");
             isScan= false;
           }
