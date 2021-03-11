@@ -256,6 +256,24 @@ public abstract class CameraActivity extends AppCompatActivity
             LOGGER.e(e, "Exception!");
             return;
         }
+//        int i;
+//        int index;
+//        byte temp;
+//        int a, b;
+//        int h = previewHeight;
+//        int w = previewWidth;
+//        //mirror y
+//        for (i=0;i<h;i ++) {
+//            a=i * w;
+//            b=(i + 1) * w-1;
+//            while (a<b) {
+//                temp=bytes [a];
+//                bytes[a]=bytes [b];
+//                bytes[b]=temp;
+//                a ++;
+//                b--;
+//            }
+//        }
 
         isProcessingFrame = true;
         yuvBytes[0] = bytes;
