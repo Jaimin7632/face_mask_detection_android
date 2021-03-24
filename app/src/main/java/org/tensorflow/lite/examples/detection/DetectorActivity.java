@@ -568,27 +568,27 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
           Integer color = Color.BLUE;
 
           final long startTime = SystemClock.uptimeMillis();
-//          final List<Classifier.Recognition> resultsAux = detector.recognizeImage(faceBmp);
-//          lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
-//
-//          if (resultsAux.size() > 0) {
-//
-//            Classifier.Recognition result = resultsAux.get(0);
-//
-//            float conf = result.getConfidence();
-//            if (conf >= 0.6f) {
-//
-//              confidence = conf;
-//              label = result.getTitle();
-//              if (result.getId().equals("0")) {
-//                color = Color.GREEN;
-//              }
-//              else {
-//                color = Color.RED;
-//              }
-//            }
-//
-//          }
+          final List<Classifier.Recognition> resultsAux = detector.recognizeImage(faceBmp);
+          lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+
+          if (resultsAux.size() > 0) {
+
+            Classifier.Recognition result = resultsAux.get(0);
+
+            float conf = result.getConfidence();
+            if (conf >= 0.6f) {
+
+              confidence = conf;
+              label = result.getTitle();
+              if (result.getId().equals("0")) {
+                color = Color.GREEN;
+              }
+              else {
+                color = Color.RED;
+              }
+            }
+
+          }
 
           if (getCameraFacing() == CameraCharacteristics.LENS_FACING_FRONT) {
 

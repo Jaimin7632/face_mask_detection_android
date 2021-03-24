@@ -833,6 +833,7 @@ public abstract class CameraActivity extends AppCompatActivity
     @Override
     public void onSerialConnectError(Exception e) {
         status("connection failed: " + e.getMessage());
+        Toast.makeText(service, "connection failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         disconnect();
     }
 
