@@ -44,6 +44,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -65,6 +66,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -160,7 +162,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
   LinearLayout lin_eyes;
   ImageView img_green, img_red;
   TextView txt_notes, eye_1;
-
+  ProgressBar pg;
 
   TempertureReceiver tempertureReceiver;
   RelativeLayout TemperatureView;
@@ -198,6 +200,11 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
 
     faceDetector = detector;
     readCsv();
+
+    Date currentTime = Calendar.getInstance().getTime();
+    TextView t = (TextView) findViewById(R.id.time1);
+    t.setText(String.valueOf(currentTime));
+
 
 
 //    if (!Python.isStarted()) {
@@ -327,6 +334,8 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     TemperatureViewBG = findViewById(R.id.img_temp_background);
     TemperatureIndicator = findViewById(R.id.img_temp_sign);
     tvTemperatureCounter =  findViewById(R.id.tv_temp_count);
+    pg = (ProgressBar) findViewById(R.id.progress);
+    pg.setProgress(0);
 //    send("M0\n");
 
     trackingOverlay = (OverlayView) findViewById(R.id.tracking_overlay);
@@ -609,8 +618,14 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
           final Classifier.Recognition result = new Classifier.Recognition(
                   "0", label, confidence, boundingBox);
           if (faceBB.centerX() > 300 && faceBB.centerX() < 370 && faceBB.centerY() > 245 && faceBB.centerY() < 310 && faceBB.height() >  330 && isScan){
-            send("M0\n");
-            isScan= false;
+            if(label.equals("mask"))
+            {
+              pg.setProgress(30);
+              send("M0\n");
+              isScan= false;
+            }else{
+              Toast.makeText(this, "Please Wear a Mask", Toast.LENGTH_SHORT).show();
+            }
           }
 //          Toast.makeText(this, String.valueOf(faceBB.centerX())+ " "+ String.valueOf(faceBB.centerY()), Toast.LENGTH_SHORT).show();
 
@@ -638,8 +653,9 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
       if (intent.getExtras() != null) {
         Float f = 0.0f;
          try {
+           pg.setProgress(60);
         f = Float.parseFloat(intent.getExtras().getString("temp_data"));
-        receiveText.setText("Operating Range : " + f + " F" + xlatedata.get(f.toString()));
+//        receiveText.setText("Operating Range : " + f + " F" + xlatedata.get(f.toString()));
         Toast.makeText(context, "Operating Range : " + f + " F"+xlatedata.get(f.toString()), Toast.LENGTH_LONG).show();
 
 
@@ -662,7 +678,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
                                 isScan = true;
                                defaultView.setVisibility(View.VISIBLE);
                                TemperatureView.setVisibility(View.GONE);
-
+                              pg.setProgress(0);
                             }
                         }, 2500);
 
@@ -689,6 +705,7 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
       TemperatureIndicator.setImageResource(R.drawable.icon_right);
 
     }
+    pg.setProgress(100);
     tvTemperatureCounter.setText(temperature + " F");
 
   }
